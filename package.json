@@ -1,0 +1,22 @@
+{
+  "name": "svc_subscription",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mongoose": "^5.0.12",
+    "mongoose-string-query": "^0.2.5",
+    "mongoose-timestamp": "^0.6.0",
+    "restify": "^7.1.0",
+    "restify-errors": "^6.0.0",
+    "restify-plugins": "^1.6.0"
+  },
+  "devDependencies": {
+    "nodemon": "^1.17.3"
+  }
+}
