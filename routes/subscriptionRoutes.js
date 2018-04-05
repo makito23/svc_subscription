@@ -1,6 +1,6 @@
 
 const errors = require('restify-errors');
-const subscriber = require('../models/subscriptionModels');
+const subscriber = require('../models/subscriptionModels.js');
 
 module.exports = function(server) {
 
@@ -23,27 +23,56 @@ module.exports = function(server) {
                 }
             }
             }  || {};
-        let newSubscriber = new subscriber(data);
-        console.log(data)
-        console.log(newSubscriber)
+        
+        /** Check for existing */
+        existingSubscriber = subscriber.findOne(
+            {'tenantId': parseInt(data.tenantId),'subscription.recipient.address':data.subscription.recipient.address}).lean().exec(function (err,doc){
+                return res.end(JSON.stringify(doc));
+            })
+            
+      /*  let newSubscriber = new subscriber(data);
+        newSubscriber.save(function(err) {
+            if (err) {
+                console.error(err);
+                return next(new errors.InternalError(err.message));
+                next();
+            }
 
-
-        subscriber.findOneAndUpdate(
+            res.send(201);
+            next();
+        })*/
+        if (existingSubscriber)
             {
-                'tenantId': parseInt(req.params.tenantId),
-                'subscription.subscriptionType': req.body.subscriptionType, 
-                'subscription.recipient.address': req.body.recipient.address 
-            }, 
-            data, {upsert:true, runValidators:true,new:true}, function(err) {
-        //newSubscriber.save(function(err) {
-			if (err) {
-				console.error(err);
-				return next(new errors.InternalError(err.message));
-				next();
-			}
-			res.send(201);
-			next();
-		});
+                subscriber.findOneAndUpdate({
+                    '_id': existingSubscriber._id,
+                    'subscription.subscriptionType': existingSubscriber.subscription.subscriptionType,
+                    'subscription.specification': existingSubscriber.subscription.specification,
+                    'subscription.recipient.address': existingSubscriber.subscription.recipient.address
+                }, {'subscription.$': data.subscription,},{ upsert:true,setDefaultsOnInsert:true}, 
+                function(err) {
+                    if (err) {
+                        console.error(err);
+                        return next(new errors.InternalError(err.message));
+                        next();
+                    }
+                    res.send(201);
+                    next();
+                })      
+            }
+                
+        else {
+            let newSubscriber = new subscriber(data);
+            newSubscriber.save(function(err) {
+                if (err) {
+                    console.error(err);
+                    return next(new errors.InternalError(err.message));
+                    next();
+                }
+    
+                res.send(201);
+                next();
+            });
+        }
 	});
 
     //get all to be paginated
@@ -76,8 +105,8 @@ module.exports = function(server) {
 	});
 
 	/** DELETE **/
-	server.del('/todos/:todo_id', (req, res, next) => {
-		Todo.remove({ _id: req.params.todo_id }, function(err) {
+	server.del('/:tenantId/Subscriber/:subscriberId', (req, res, next) => {
+		subscriber.remove({ _id: req.params.subscriberId }, function(err) {
 			if (err) {
 				console.error(err);
 				return next(
